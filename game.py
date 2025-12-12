@@ -1,50 +1,66 @@
-
+import json
+import random
 class Wordle:
-    word_list:list[str] = [] # pull from somewhere else later
-    num_of_guesses:int = 6
-    user_guesses_matrix:list[list[tuple]] = [] # 0 for incorrect, 1 for correct but wrong place, 2 for correct
-    user_guess:list[str] = []
-    target_word:str = 'black'
-    current_guess_num = 0
-    win_condition = False
-    score = 6
-    def guess(self, word):
+
+    def __init__(self, word_list, target_word=None):
+        self.word_list = word_list
+        self.target_word = target_word if target_word else random.choice(word_list)
+        self.win_condition = False
+        self.score = 6
+
+    def guess(self, word: str) -> list[tuple[str, int]]:
+
+        if self.win_condition or self.score == 0:
+            return []
+
         if word == self.target_word:
             self.win_condition = True
-            print('you win')
-            return
+            self.score -= 1
+            return [(l, 2) for l in word]
 
-        word_list:list[tuple] = []
-        for i,j in zip(word, self.target_word):
-            if i == j:
-                word_list.append((i, 2))
-            elif i in self.target_word:
-                word_list.append((i, 1))
+        guess_list = list(word)
+        target_list = list(self.target_word)
+        feedback:list[tuple] = []
+        target_counts = {l: self.target_word.count(l) for l in self.target_word}
+        
+        for i in range(5):
+            letter = guess_list[i]
+            target_letter = target_list[i]
+            if letter == target_letter:
+                feedback.append((letter, 2))
+                target_counts[letter] -= 1
+            elif letter in self.target_word and target_counts.get(letter, 0) > 0:
+                feedback.append((letter, 1))
+                target_counts[guess_list[i]] -= 1
             else:
-                word_list.append((i, 0))
-        self.user_guesses_matrix.append(word_list)
+                feedback.append((letter, 0))
         self.score -= 1
-        print(self.user_guesses_matrix)
+        return feedback
 
-    def prompt_guess(self):
-        if len(self.user_guess) == 6:
-            self.win_condition = True
-            print('game over')
-            return
-        guess = input('Guess the five letter word: ')    
-        if len(guess) != 5:
-            print('you need to input a five letter word')
-            self.prompt_guess()
-        else:
-            self.user_guess.append(guess)
-            self.guess(guess) 
+    def get_status(self) -> tuple[bool, bool, int]:
+        is_won = self.win_condition
+        is_lost = (self.score == 0 and not is_won)
+        return is_won, is_lost, self.score
 
 
 
     
         
 if __name__ == '__main__':
-    wrdle = Wordle()
-    while wrdle.win_condition == False:
-        wrdle.prompt_guess()
+    possible_world_list = []
+    with open('./wordle-list', 'r') as file:
+        possible_world_list = json.loads(file.read())
+
+    
+    for i in range(1000):
+        wrdle = Wordle(possible_world_list)
+        guesses = []
+        while not wrdle.win_condition and wrdle.score > 0:
+            guess_word = random.choice(wrdle.word_list)
+            wrdle.guess(guess_word)
+            guesses.append(guess_word)
+        is_won, is_lost, score = wrdle.get_status()
+        if is_won:
+            print(f'game {i} won with a score of {score}')
+            print(f'target: {wrdle.target_word}\tguesses: {guesses}')
 
