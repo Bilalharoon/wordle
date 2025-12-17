@@ -8,20 +8,12 @@ class Wordle:
         self.win_condition = False
         self.score = 6
 
-    def guess(self, word: str) -> list[tuple[str, int]]:
-
-        if self.win_condition or self.score == 0:
-            return []
-
-        if word == self.target_word:
-            self.win_condition = True
-            self.score -= 1
-            return [(l, 2) for l in word]
-
+    @classmethod
+    def get_feedback(self, word, target_word):
         guess_list = list(word)
-        target_list = list(self.target_word)
+        target_list = list(target_word)
         feedback:list[tuple] = []
-        target_counts = {l: self.target_word.count(l) for l in self.target_word}
+        target_counts = {l: target_word.count(l) for l in target_word}
         
         for i in range(5):
             letter = guess_list[i]
@@ -29,17 +21,31 @@ class Wordle:
             if letter == target_letter:
                 feedback.append((letter, 2))
                 target_counts[letter] -= 1
-            elif letter in self.target_word and target_counts.get(letter, 0) > 0:
+            elif letter in target_word and target_counts.get(letter, 0) > 0:
                 feedback.append((letter, 1))
                 target_counts[guess_list[i]] -= 1
             else:
                 feedback.append((letter, 0))
+        return feedback
+
+
+    def guess(self, word: str) -> list[tuple[str, int]]:
+
+        if self.win_condition or self.score < 0:
+            return []
+
+        if word == self.target_word:
+            self.win_condition = True
+            self.score -= 1
+            return [(l, 2) for l in word]
+
+        feedback = self.get_feedback(word, self.target_word)
         self.score -= 1
         return feedback
 
     def get_status(self) -> tuple[bool, bool, int]:
         is_won = self.win_condition
-        is_lost = (self.score == 0 and not is_won)
+        is_lost = (self.score < 0 and not is_won)
         return is_won, is_lost, self.score
 
 
