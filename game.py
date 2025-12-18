@@ -54,10 +54,11 @@ class Wordle:
         
 if __name__ == '__main__':
     possible_world_list = []
+
     with open('./wordle-list', 'r') as file:
         possible_world_list = json.loads(file.read())
 
-    
+    games_won_count = 0    
     for i in range(1000):
         wrdle = Wordle(possible_world_list)
         guesses = []
@@ -68,5 +69,7 @@ if __name__ == '__main__':
         is_won, is_lost, score = wrdle.get_status()
         if is_won:
             print(f'game {i} won with a score of {score}')
+            games_won_count += 1
             print(f'target: {wrdle.target_word}\tguesses: {guesses}')
+    print(f'games won out of 1000 {games_won_count}')
 
