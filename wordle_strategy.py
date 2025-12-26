@@ -21,35 +21,43 @@ class SimpleWordleAgent():
         possible_words = []
         green_letters = list(filter(lambda x: x[1] == 2, feedback))
         yellow_letters = list(filter(lambda x: x[1] == 1, feedback))
-        self.included_letters += list([l[0] for l in green_letters] + [l[0] for l in yellow_letters])
-        self.included_letters = list(set(self.included_letters))
         gray_letters = list(filter(lambda x: x[1] == 0, feedback))
+
+        self.included_letters += list([l[0] for l in green_letters] + [l[0] for l in yellow_letters])
+        self.banned_letters += [l[0] for l in gray_letters]
+        self.included_letters = list(set(self.included_letters))
+        self.banned_letters = list(set(self.banned_letters))
+        # print(self.banned_letters)
+        # print(self.included_letters)
         # gray_letters = [l[0] for l in gray_letters if l not in self.included_letters]
         # print(gray_letters) 
-
         for word in self.word_list:
             p_feedback = Wordle.get_feedback(word, guess_word)
-            
-            # green_feedback_letters = list(filter(lambda p: p[0][1]==2 and p[1][1] ==2, zip(p_feedback, feedback)))
-            # for x,p in zip(feedback, p_feedback):
-                # if x[1] == 2 and p[1] == 2:
-                    # print(x, p)
-            # print(word, feedback, not any(letter[0] in self.banned_letters for letter in p_feedback))
-            if all(letter in word for letter in self.included_letters) and (word not in self.guesses):
-                # print(word, guess_word, feedback)
-                if len(green_letters) > 0:
-                    if all([item in p_feedback for item in green_letters]):
-                        possible_words.append(word)
-                else:
-                    possible_words.append(word)
+            green_feedback_letters = [p_feedback[i][0] for i in range(5) if p_feedback[i][1] == 2 and feedback[i][1] == 2]
+            green_feedback_letters = list(set(green_feedback_letters))
 
+            if len(green_feedback_letters) > 0:
+                self.included_letters += [letter for letter in green_feedback_letters if letter not in self.included_letters]
+            
+            included_letters_in_word = all(letter in word for letter in self.included_letters)
+            banned_letters_not_in_word = all(letter not in word for letter in self.banned_letters) 
+            word_not_guessed = word not in self.guesses
+            yellow_letters_in_same_place = any(p_feedback[i][1] == 2 and feedback[i][1] == 1 for i in range(5))
+
+            if included_letters_in_word and banned_letters_not_in_word and word_not_guessed and not yellow_letters_in_same_place:
+                    possible_words.append(word)
+            if len(possible_word_list) == 1:
+                return possible_words[0]
             # print(green_feedback_letters, green_letters)
         # if len(possible_words) < 1:
             # return random.choice(self.word_list)
         # print(len(possible_words))
-        self.word_list = possible_words[:]
-        # print(f'list length {len(self.word_list)}')
-        word_choice = random.choice(self.word_list)
+        if len(possible_words) < 1:
+            word_choice = random.choice(self.word_list)
+        else:
+            self.word_list = possible_words[:]
+            word_choice = random.choice(self.word_list)
+
         self.guesses.append(word_choice)
         # print(self.guesses)
         return word_choice
@@ -67,15 +75,14 @@ if __name__ == '__main__':
         print('\n')
         print('\n')
         print(f'game {i}')
-        # word = random.choice(possible_word_list)
-        word = 'aides'
+        word = random.choice(possible_word_list)
+        # word = 'aides'
         simpleAgent.guesses.append(word)
         wrdle = Wordle(possible_word_list)
         print(f'target word: {wrdle.target_word}')
         initial_guess = wrdle.guess(word)
         feedback = wrdle.guess(word)
         while not wrdle.win_condition and wrdle.score > 0:
-            guesses.append(word)
             # print(wrdle.target_word in simpleAgent.word_list)
             word = simpleAgent.play(word, feedback)
             feedback = wrdle.guess(word)
@@ -86,8 +93,7 @@ if __name__ == '__main__':
             game_won_count += 1
         else:
             print('game lost')
-        print(f'target: {wrdle.target_word}\tguesses:{guesses}')
-        # print(simpleAgent.included_letters)
+        print(f'target: {wrdle.target_word}\tguesses:{simpleAgent.guesses}')
     print(f'Games won out of {NUM_OF_GAMES}: {game_won_count}')
     
 

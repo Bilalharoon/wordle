@@ -9,7 +9,7 @@ class Wordle:
         self.score = 6
 
     @classmethod
-    def get_feedback(self, word, target_word):
+    def get_feedback(self, word, target_word) -> list[tuple[str, int]]:
         guess_list = list(word)
         target_list = list(target_word)
         feedback:list[tuple] = []
@@ -31,7 +31,7 @@ class Wordle:
 
     def guess(self, word: str) -> list[tuple[str, int]]:
 
-        if self.win_condition or self.score < 0:
+        if self.win_condition or self.score < 1:
             return []
 
         if word == self.target_word:
